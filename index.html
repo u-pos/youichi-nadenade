@@ -150,6 +150,10 @@
       text-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
     }
 
+    .overlay h1:empty {
+      display: none;
+    }
+
     .overlay p {
       margin: 0;
       color: #e2e8f0;
@@ -267,6 +271,7 @@
     let lastMoveDirection = null;
     let timeLeft = timeLimit;
     let gameEnded = false;
+    let gameStarted = false;
     const moveThreshold = 12;
 
     const hitZones = [
@@ -368,6 +373,7 @@
       phase = "over";
       scene.src = images.over;
       updateHud();
+      restartButton.textContent = "RESTART";
       endGame("GAME OVER", "");
     }
 
@@ -375,7 +381,8 @@
       phase = "over";
       scene.src = images.over;
       updateHud();
-      endGame("TIME UP", "");
+      restartButton.textContent = "RESTART";
+      endGame("黙ってたけどお触りは禁止だよ", "");
     }
 
     function nextCycle() {
@@ -468,7 +475,7 @@
     }
 
     function handlePointerDown(event) {
-      if (phase === "over" || gameEnded) {
+      if (!gameStarted || phase === "over" || gameEnded) {
         return;
       }
 
@@ -486,7 +493,7 @@
     }
 
     function handlePointerMove(event) {
-      if (!pointerDown || phase === "over" || gameEnded) {
+      if (!gameStarted || !pointerDown || phase === "over" || gameEnded) {
         return;
       }
 
@@ -527,6 +534,7 @@
     }
 
     function startGame() {
+      gameStarted = true;
       ap = 0;
       timeLeft = timeLimit;
       gameEnded = false;
@@ -539,6 +547,22 @@
       updateHud();
       nextCycle();
       startCountdown();
+    }
+
+    function showStartScreen() {
+      gameStarted = false;
+      gameEnded = false;
+      ap = 0;
+      timeLeft = timeLimit;
+      pointerDown = false;
+      lastPointerY = null;
+      lastMoveDirection = null;
+      clearCycleTimer();
+      clearCountdownTimer();
+      restartButton.textContent = "START";
+      setScene("safe");
+      updateHud();
+      showOverlay("", "");
     }
 
     stage.addEventListener("pointerdown", handlePointerDown);
@@ -559,7 +583,7 @@
 
     migrateLegacyHighScores();
     updateHud();
-    startGame();
+    showStartScreen();
   </script>
 </body>
 </html>
