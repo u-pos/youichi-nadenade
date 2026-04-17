@@ -12,10 +12,7 @@
       --line: rgba(255, 255, 255, 0.14);
       --text: #f8fafc;
       --sub: #cbd5e1;
-      --safe: #22c55e;
-      --warn: #f59e0b;
-      --danger: #ef4444;
-      --accent: #38bdf8;
+      --accent: #fda4af;
     }
 
     * {
@@ -39,6 +36,7 @@
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
+      cursor: url("hand.png") 16 16, auto;
     }
 
     .game-shell {
@@ -58,55 +56,20 @@
       box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     }
 
-    .top-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+    .title {
+      margin: 0;
+      font-size: clamp(1.2rem, 4vw, 1.7rem);
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-align: center;
     }
 
     .score {
-      font-size: 1.1rem;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-    }
-
-    .status {
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.08);
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-
-    .status.safe { color: #bbf7d0; }
-    .status.warning { color: #fde68a; }
-    .status.watch { color: #fecaca; }
-    .status.clear { color: #bae6fd; }
-    .status.over { color: #fecaca; }
-
-    .meter {
-      width: 100%;
-      height: 14px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .meter-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, var(--safe), var(--accent));
-      transition: width 0.12s linear;
-    }
-
-    .help {
       margin: 0;
-      color: var(--sub);
-      font-size: 0.92rem;
-      line-height: 1.5;
+      color: #ffe4e6;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-align: center;
     }
 
     .stage {
@@ -118,6 +81,7 @@
       box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
       aspect-ratio: 5 / 4;
       touch-action: none;
+      cursor: url("hand.png") 16 16, auto;
     }
 
     .stage img {
@@ -162,6 +126,12 @@
       pointer-events: auto;
     }
 
+    .overlay.game-over {
+      justify-content: flex-end;
+      padding: 20px 20px 28px;
+      background: transparent;
+    }
+
     .overlay h1 {
       margin: 0;
       font-size: clamp(1.6rem, 5vw, 2.4rem);
@@ -173,6 +143,10 @@
       margin: 0;
       color: #e2e8f0;
       line-height: 1.5;
+    }
+
+    .overlay p:empty {
+      display: none;
     }
 
     button {
@@ -192,17 +166,8 @@
 <body>
   <main class="game-shell">
     <section class="hud">
-      <div class="top-row">
-        <div class="score" id="score">AP 0 / 100</div>
-        <div class="status safe" id="status">SAFE</div>
-      </div>
-      <div class="meter">
-        <div class="meter-fill" id="meterFill"></div>
-      </div>
-      <p class="help">
-        Swipe on the head, body, or hips to gain 5 AP per stroke.
-        Stop touching during WARNING or WATCH or the game ends instantly.
-      </p>
+      <h1 class="title">陽一なでなでゲーム</h1>
+      <p class="score" id="score">Love Point: 0</p>
     </section>
 
     <section class="stage" id="stage">
@@ -224,21 +189,9 @@
       over: "4.jpg"
     };
 
-    const goal = 100;
-
-    const stateLabels = {
-      safe: "SAFE",
-      warning: "WARNING",
-      watch: "WATCH",
-      clear: "CLEAR",
-      over: "GAME OVER"
-    };
-
     const scene = document.getElementById("scene");
     const stage = document.getElementById("stage");
-    const statusEl = document.getElementById("status");
     const scoreEl = document.getElementById("score");
-    const meterFill = document.getElementById("meterFill");
     const overlay = document.getElementById("overlay");
     const overlayTitle = document.getElementById("overlayTitle");
     const overlayText = document.getElementById("overlayText");
@@ -249,8 +202,10 @@
     let phase = "safe";
     let timer = null;
     let pointerDown = false;
-    let strokeCounted = false;
     let flashTimer = null;
+    let lastPointerY = null;
+    let lastMoveDirection = null;
+    const moveThreshold = 12;
 
     const hitZones = [
       { cx: 0.55, cy: 0.20, rx: 0.09, ry: 0.08 },
@@ -259,19 +214,18 @@
     ];
 
     function updateHud() {
-      scoreEl.textContent = `AP ${ap} / ${goal}`;
-      meterFill.style.width = `${Math.min(ap, goal)}%`;
-      statusEl.textContent = stateLabels[phase];
-      statusEl.className = `status ${phase}`;
+      scoreEl.textContent = `Love Point: ${ap}`;
     }
 
     function showOverlay(title, text) {
       overlayTitle.textContent = title;
       overlayText.textContent = text;
+      overlay.classList.toggle("game-over", phase === "over");
       overlay.classList.add("show");
     }
 
     function hideOverlay() {
+      overlay.classList.remove("game-over");
       overlay.classList.remove("show");
     }
 
@@ -296,20 +250,12 @@
       }, 120);
     }
 
-    function gameClear() {
-      clearCycleTimer();
-      phase = "clear";
-      scene.src = images.safe;
-      updateHud();
-      showOverlay("CLEAR", "AP reached 100.");
-    }
-
     function gameOver() {
       clearCycleTimer();
       phase = "over";
       scene.src = images.over;
       updateHud();
-      showOverlay("GAME OVER", "You touched during the watch phase.");
+      showOverlay("GAME OVER", "");
     }
 
     function nextCycle() {
@@ -327,7 +273,7 @@
         timer = setTimeout(() => {
           setScene("watch");
           nextCycle();
-        }, 1000);
+        }, 2000);
         return;
       }
 
@@ -351,56 +297,83 @@
       });
     }
 
-    function handleStroke(event) {
-      if (!pointerDown || strokeCounted || phase === "clear" || phase === "over") {
+    function addAp(amount) {
+      ap += amount;
+      triggerFlash();
+      updateHud();
+    }
+
+    function handlePointerDown(event) {
+      if (phase === "over") {
         return;
       }
+
+      pointerDown = true;
+      lastPointerY = event.clientY;
+      lastMoveDirection = null;
 
       if (!pointInZones(event.clientX, event.clientY)) {
         return;
       }
 
-      strokeCounted = true;
+      if (phase === "warning" || phase === "watch") {
+        gameOver();
+      }
+    }
+
+    function handlePointerMove(event) {
+      if (!pointerDown || phase === "over") {
+        return;
+      }
+
+      if (lastPointerY === null) {
+        lastPointerY = event.clientY;
+        return;
+      }
+
+      const deltaY = event.clientY - lastPointerY;
+
+      if (Math.abs(deltaY) < moveThreshold) {
+        return;
+      }
+
+      lastPointerY = event.clientY;
+
+      if (!pointInZones(event.clientX, event.clientY)) {
+        return;
+      }
+
+      const direction = deltaY > 0 ? "down" : "up";
 
       if (phase === "warning" || phase === "watch") {
         gameOver();
         return;
       }
 
-      ap += 5;
-      triggerFlash();
-      updateHud();
-
-      if (ap >= goal) {
-        gameClear();
+      if (direction !== lastMoveDirection) {
+        lastMoveDirection = direction;
+        addAp(1);
       }
     }
 
     function endStroke() {
       pointerDown = false;
-      strokeCounted = false;
+      lastPointerY = null;
+      lastMoveDirection = null;
     }
 
     function startGame() {
       ap = 0;
       pointerDown = false;
-      strokeCounted = false;
+      lastPointerY = null;
+      lastMoveDirection = null;
       hideOverlay();
       setScene("safe");
       nextCycle();
     }
 
-    stage.addEventListener("pointerdown", (event) => {
-      if (phase === "clear" || phase === "over") {
-        return;
-      }
-
-      pointerDown = true;
-      strokeCounted = false;
-      handleStroke(event);
-    });
-
-    stage.addEventListener("pointermove", handleStroke);
+    stage.addEventListener("pointerdown", handlePointerDown);
+    stage.addEventListener("pointermove", handlePointerMove);
     stage.addEventListener("pointerup", endStroke);
     stage.addEventListener("pointercancel", endStroke);
     stage.addEventListener("pointerleave", endStroke);
