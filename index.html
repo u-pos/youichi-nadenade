@@ -73,11 +73,31 @@
     }
 
     .time {
+      display: none;
+    }
+
+    .stage-badges {
+      position: absolute;
+      inset: 12px 12px auto 12px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .badge {
       margin: 0;
-      color: #e2e8f0;
-      font-size: clamp(1rem, 3.2vw, 1.2rem);
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f8fafc;
+      font-size: clamp(0.82rem, 2.8vw, 1rem);
       font-weight: 700;
-      text-align: center;
+      line-height: 1.2;
+      white-space: nowrap;
     }
 
     .stage {
@@ -139,31 +159,6 @@
       display: none;
     }
 
-    .ranking {
-      width: min(100%, 260px);
-      margin: 0;
-      padding: 12px 16px;
-      border-radius: 18px;
-      background: rgba(15, 23, 42, 0.72);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      color: #f8fafc;
-      text-align: left;
-    }
-
-    .ranking h2 {
-      margin: 0 0 8px;
-      font-size: 1rem;
-    }
-
-    .ranking ol {
-      margin: 0;
-      padding-left: 20px;
-    }
-
-    .ranking li {
-      line-height: 1.6;
-    }
-
     button {
       appearance: none;
       border: 0;
@@ -222,18 +217,17 @@
     <section class="hud">
       <h1 class="title">陽一なでなでゲーム</h1>
       <p class="score" id="score">Love Point: 0</p>
-      <p class="time" id="timeLeft">Time Left: 60</p>
     </section>
 
     <section class="stage" id="stage">
       <img id="scene" alt="game scene">
+      <div class="stage-badges">
+        <p class="badge" id="bestScore">現在のハイスコア：0</p>
+        <p class="badge" id="timeLeft">残り時間：60秒</p>
+      </div>
       <div class="overlay" id="overlay">
         <h1 id="overlayTitle"></h1>
         <p id="overlayText"></p>
-        <section class="ranking" id="ranking">
-          <h2>High Score</h2>
-          <ol id="rankingList"></ol>
-        </section>
         <button id="restartButton" type="button">RESTART</button>
       </div>
     </section>
@@ -251,17 +245,16 @@
     const scene = document.getElementById("scene");
     const stage = document.getElementById("stage");
     const scoreEl = document.getElementById("score");
+    const bestScoreEl = document.getElementById("bestScore");
     const timeLeftEl = document.getElementById("timeLeft");
     const overlay = document.getElementById("overlay");
     const overlayTitle = document.getElementById("overlayTitle");
     const overlayText = document.getElementById("overlayText");
-    const ranking = document.getElementById("ranking");
-    const rankingList = document.getElementById("rankingList");
     const restartButton = document.getElementById("restartButton");
     const cursorHand = document.getElementById("cursorHand");
 
     const timeLimit = 60;
-    const highScoreKey = "yoi-nadenade-highscores";
+    const highScoreKey = "yoi-nadenade-bestscore";
     let ap = 0;
     let phase = "safe";
     let timer = null;
@@ -281,7 +274,8 @@
 
     function updateHud() {
       scoreEl.textContent = `Love Point: ${ap}`;
-      timeLeftEl.textContent = `Time Left: ${timeLeft}`;
+      timeLeftEl.textContent = `残り時間：${timeLeft}秒`;
+      bestScoreEl.textContent = `現在のハイスコア：${loadBestScore()}`;
     }
 
     function showOverlay(title, text) {
@@ -319,39 +313,39 @@
       }
     }
 
-    function loadHighScores() {
+    function loadBestScore() {
       try {
-        const saved = JSON.parse(localStorage.getItem(highScoreKey) || "[]");
-        return Array.isArray(saved) ? saved.filter((value) => Number.isFinite(value)) : [];
+        const saved = Number(localStorage.getItem(highScoreKey) || "0");
+        return Number.isFinite(saved) ? saved : 0;
       } catch {
-        return [];
+        return 0;
       }
     }
 
-    function saveHighScore(score) {
-      const scores = loadHighScores();
-      scores.push(score);
-      scores.sort((a, b) => b - a);
-      const topScores = scores.slice(0, 5);
-      localStorage.setItem(highScoreKey, JSON.stringify(topScores));
-      return topScores;
+    function saveBestScore(score) {
+      const currentBest = loadBestScore();
+      const nextBest = Math.max(currentBest, score);
+      localStorage.setItem(highScoreKey, String(nextBest));
+      return nextBest;
     }
 
-    function renderHighScores(scores = loadHighScores()) {
-      rankingList.innerHTML = "";
+    function migrateLegacyHighScores() {
+      const legacyKey = "yoi-nadenade-highscores";
+      const bestScore = loadBestScore();
 
-      if (scores.length === 0) {
-        const item = document.createElement("li");
-        item.textContent = "No score yet";
-        rankingList.appendChild(item);
+      if (bestScore > 0) {
         return;
       }
 
-      scores.forEach((score) => {
-        const item = document.createElement("li");
-        item.textContent = `${score}`;
-        rankingList.appendChild(item);
-      });
+      try {
+        const saved = JSON.parse(localStorage.getItem(legacyKey) || "[]");
+        if (Array.isArray(saved) && saved.length > 0) {
+          const top = Math.max(...saved.filter((value) => Number.isFinite(value)), 0);
+          localStorage.setItem(highScoreKey, String(top));
+        }
+      } catch {
+        return;
+      }
     }
 
     function endGame(title, text) {
@@ -362,8 +356,8 @@
       gameEnded = true;
       clearCycleTimer();
       clearCountdownTimer();
-      const scores = saveHighScore(ap);
-      renderHighScores(scores);
+      saveBestScore(ap);
+      updateHud();
       showOverlay(title, text);
     }
 
@@ -537,7 +531,6 @@
       lastPointerY = null;
       lastMoveDirection = null;
       hideOverlay();
-      renderHighScores();
       disableNativeCursor();
       setScene("safe");
       updateHud();
@@ -561,7 +554,8 @@
     window.addEventListener("pointerleave", hideCursor);
     window.addEventListener("blur", hideCursor);
 
-    renderHighScores();
+    migrateLegacyHighScores();
+    updateHud();
     startGame();
   </script>
 </body>
