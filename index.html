@@ -72,6 +72,12 @@
       text-align: center;
     }
 
+    .score-value {
+      color: #fde047;
+      font-size: 1.28em;
+      font-weight: 800;
+    }
+
     .time {
       display: none;
     }
@@ -235,7 +241,7 @@
   <main class="game-shell">
     <section class="hud">
       <h1 class="title">陽一なでなでゲーム</h1>
-      <p class="score" id="score">Love Point: 0</p>
+      <p class="score" id="score">Love Point: <span class="score-value" id="scoreValue">0</span></p>
     </section>
 
     <section class="stage" id="stage">
@@ -265,7 +271,7 @@
 
     const scene = document.getElementById("scene");
     const stage = document.getElementById("stage");
-    const scoreEl = document.getElementById("score");
+    const scoreValueEl = document.getElementById("scoreValue");
     const bestScoreEl = document.getElementById("bestScore");
     const timeLeftEl = document.getElementById("timeLeft");
     const overlay = document.getElementById("overlay");
@@ -295,7 +301,7 @@
     ];
 
     function updateHud() {
-      scoreEl.textContent = `Love Point: ${ap}`;
+      scoreValueEl.textContent = `${ap}`;
       timeLeftEl.textContent = `残り時間\n${timeLeft}秒`;
       bestScoreEl.textContent = `ハイスコア\n${loadBestScore()}点`;
     }
@@ -380,6 +386,7 @@
       gameEnded = true;
       clearCycleTimer();
       clearCountdownTimer();
+      disablePlayCursor();
       saveBestScore(ap);
       updateHud();
       showOverlay(title, text);
