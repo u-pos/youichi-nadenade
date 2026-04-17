@@ -78,9 +78,9 @@
 
     .stage-badges {
       position: absolute;
-      inset: 12px 12px auto 12px;
+      inset: auto 12px 12px 12px;
       display: flex;
-      align-items: flex-start;
+      align-items: flex-end;
       justify-content: space-between;
       gap: 12px;
       pointer-events: none;
@@ -89,15 +89,16 @@
 
     .badge {
       margin: 0;
-      padding: 8px 12px;
-      border-radius: 999px;
+      padding: 10px 12px;
+      border-radius: 16px;
       background: rgba(15, 23, 42, 0.74);
       border: 1px solid rgba(255, 255, 255, 0.14);
       color: #f8fafc;
       font-size: clamp(0.82rem, 2.8vw, 1rem);
       font-weight: 700;
-      line-height: 1.2;
-      white-space: nowrap;
+      line-height: 1.35;
+      white-space: pre-line;
+      min-width: 116px;
     }
 
     .stage {
@@ -138,7 +139,7 @@
 
     .overlay.game-over {
       justify-content: flex-end;
-      padding: 20px 20px 28px;
+      padding: 20px 20px 46px;
       background: transparent;
     }
 
@@ -222,8 +223,10 @@
     <section class="stage" id="stage">
       <img id="scene" alt="game scene">
       <div class="stage-badges">
-        <p class="badge" id="bestScore">現在のハイスコア：0</p>
-        <p class="badge" id="timeLeft">残り時間：60秒</p>
+        <p class="badge" id="bestScore">ハイスコア
+0点</p>
+        <p class="badge" id="timeLeft">残り時間
+60秒</p>
       </div>
       <div class="overlay" id="overlay">
         <h1 id="overlayTitle"></h1>
@@ -274,8 +277,8 @@
 
     function updateHud() {
       scoreEl.textContent = `Love Point: ${ap}`;
-      timeLeftEl.textContent = `残り時間：${timeLeft}秒`;
-      bestScoreEl.textContent = `現在のハイスコア：${loadBestScore()}`;
+      timeLeftEl.textContent = `残り時間\n${timeLeft}秒`;
+      bestScoreEl.textContent = `ハイスコア\n${loadBestScore()}点`;
     }
 
     function showOverlay(title, text) {
