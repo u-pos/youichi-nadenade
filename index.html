@@ -36,7 +36,7 @@
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
-      cursor: url("./hand.png") 8 8, pointer;
+      cursor: none;
     }
 
     .game-shell {
@@ -67,21 +67,16 @@
     .score {
       margin: 0;
       color: #ffe4e6;
-      font-size: clamp(1.2rem, 4vw, 1.7rem);
+      font-size: clamp(1.35rem, 4.6vw, 1.95rem);
       font-weight: 700;
       text-align: center;
     }
 
     .stage {
       position: relative;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      background: rgba(2, 6, 23, 0.75);
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
       aspect-ratio: 5 / 4;
       touch-action: none;
-      cursor: url("./hand.png") 8 8, pointer;
+      cursor: none;
     }
 
     .stage img {
@@ -89,20 +84,7 @@
       height: 100%;
       display: block;
       object-fit: contain;
-      background: #0b1120;
       pointer-events: none;
-    }
-
-    .flash {
-      position: absolute;
-      inset: 0;
-      background: transparent;
-      pointer-events: none;
-      transition: background 0.12s ease;
-    }
-
-    .flash.active {
-      background: rgba(255, 255, 255, 0.14);
     }
 
     .overlay {
@@ -159,7 +141,36 @@
       color: #08111f;
       background: linear-gradient(180deg, #f8fafc, #cbd5e1);
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-      cursor: url("./hand.png") 8 8, pointer;
+      cursor: none;
+    }
+
+    .cursor-hand {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 72px;
+      height: auto;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-8px, -8px);
+      opacity: 0;
+      transition: opacity 0.08s ease;
+    }
+
+    .cursor-hand.show {
+      opacity: 1;
+    }
+
+    @media (pointer: coarse) {
+      body,
+      .stage,
+      button {
+        cursor: auto;
+      }
+
+      .cursor-hand {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -172,7 +183,6 @@
 
     <section class="stage" id="stage">
       <img id="scene" alt="game scene">
-      <div class="flash" id="flash"></div>
       <div class="overlay" id="overlay">
         <h1 id="overlayTitle"></h1>
         <p id="overlayText"></p>
@@ -180,6 +190,7 @@
       </div>
     </section>
   </main>
+  <img class="cursor-hand" id="cursorHand" src="./hand.png" alt="">
 
   <script>
     const images = {
@@ -196,13 +207,12 @@
     const overlayTitle = document.getElementById("overlayTitle");
     const overlayText = document.getElementById("overlayText");
     const restartButton = document.getElementById("restartButton");
-    const flash = document.getElementById("flash");
+    const cursorHand = document.getElementById("cursorHand");
 
     let ap = 0;
     let phase = "safe";
     let timer = null;
     let pointerDown = false;
-    let flashTimer = null;
     let lastPointerY = null;
     let lastMoveDirection = null;
     const moveThreshold = 12;
@@ -245,14 +255,6 @@
       }
     }
 
-    function triggerFlash() {
-      flash.classList.add("active");
-      clearTimeout(flashTimer);
-      flashTimer = setTimeout(() => {
-        flash.classList.remove("active");
-      }, 120);
-    }
-
     function gameOver() {
       clearCycleTimer();
       phase = "over";
@@ -276,7 +278,7 @@
         timer = setTimeout(() => {
           setScene("watch");
           nextCycle();
-        }, 2000);
+        }, 1000);
         return;
       }
 
@@ -302,8 +304,17 @@
 
     function addAp(amount) {
       ap += amount;
-      triggerFlash();
       updateHud();
+    }
+
+    function updateCursor(event) {
+      cursorHand.style.left = `${event.clientX}px`;
+      cursorHand.style.top = `${event.clientY}px`;
+      cursorHand.classList.add("show");
+    }
+
+    function hideCursor() {
+      cursorHand.classList.remove("show");
     }
 
     function handlePointerDown(event) {
@@ -382,6 +393,10 @@
     stage.addEventListener("pointerleave", endStroke);
     scene.addEventListener("dragstart", (event) => event.preventDefault());
     restartButton.addEventListener("click", startGame);
+    window.addEventListener("pointermove", updateCursor);
+    window.addEventListener("pointerdown", updateCursor);
+    window.addEventListener("pointerleave", hideCursor);
+    window.addEventListener("blur", hideCursor);
 
     startGame();
   </script>
