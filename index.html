@@ -36,7 +36,7 @@
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
-      cursor: none;
+      cursor: auto;
     }
 
     .game-shell {
@@ -105,7 +105,7 @@
       position: relative;
       aspect-ratio: 5 / 4;
       touch-action: none;
-      cursor: none;
+      cursor: auto;
     }
 
     .stage img {
@@ -148,10 +148,24 @@
       font-size: clamp(1.6rem, 5vw, 2.4rem);
       line-height: 1.1;
       text-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
+      white-space: nowrap;
     }
 
     .overlay h1:empty {
       display: none;
+    }
+
+    .overlay h1.long-message {
+      font-size: clamp(1.05rem, 3.3vw, 1.45rem);
+      text-shadow:
+        -2px -2px 0 #000,
+        0 -2px 0 #000,
+        2px -2px 0 #000,
+        -2px 0 0 #000,
+        2px 0 0 #000,
+        -2px 2px 0 #000,
+        0 2px 0 #000,
+        2px 2px 0 #000;
     }
 
     .overlay p {
@@ -174,17 +188,17 @@
       color: #08111f;
       background: linear-gradient(180deg, #f8fafc, #cbd5e1);
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      cursor: auto;
+    }
+
+    .play-cursor-active,
+    .play-cursor-active .stage,
+    .play-cursor-active button {
       cursor: none;
     }
 
-    .native-cursor-active,
-    .native-cursor-active .stage,
-    .native-cursor-active button {
-      cursor: pointer;
-    }
-
-    .native-cursor-active .cursor-hand {
-      opacity: 0 !important;
+    .play-cursor-active .cursor-hand.show {
+      opacity: 1;
     }
 
     .cursor-hand {
@@ -288,12 +302,14 @@
 
     function showOverlay(title, text) {
       overlayTitle.textContent = title;
+      overlayTitle.classList.toggle("long-message", title === "黙ってたけどお触りは禁止だよ");
       overlayText.textContent = text;
       overlay.classList.toggle("game-over", phase === "over");
       overlay.classList.add("show");
     }
 
     function hideOverlay() {
+      overlayTitle.classList.remove("long-message");
       overlay.classList.remove("game-over");
       overlay.classList.remove("show");
     }
@@ -438,6 +454,11 @@
     }
 
     function updateCursor(event) {
+      if (!gameStarted || gameEnded) {
+        cursorHand.classList.remove("show");
+        return;
+      }
+
       cursorHand.style.left = `${event.clientX}px`;
       cursorHand.style.top = `${event.clientY}px`;
       cursorHand.classList.add("show");
@@ -447,12 +468,13 @@
       cursorHand.classList.remove("show");
     }
 
-    function enableNativeCursor() {
-      document.body.classList.add("native-cursor-active");
+    function enablePlayCursor() {
+      document.body.classList.add("play-cursor-active");
     }
 
-    function disableNativeCursor() {
-      document.body.classList.remove("native-cursor-active");
+    function disablePlayCursor() {
+      document.body.classList.remove("play-cursor-active");
+      hideCursor();
     }
 
     function startCountdown() {
@@ -542,7 +564,7 @@
       lastPointerY = null;
       lastMoveDirection = null;
       hideOverlay();
-      disableNativeCursor();
+      enablePlayCursor();
       setScene("safe");
       updateHud();
       nextCycle();
@@ -560,6 +582,7 @@
       clearCycleTimer();
       clearCountdownTimer();
       restartButton.textContent = "START";
+      disablePlayCursor();
       setScene("safe");
       updateHud();
       showOverlay("", "");
@@ -572,10 +595,6 @@
     stage.addEventListener("pointerleave", endStroke);
     scene.addEventListener("dragstart", (event) => event.preventDefault());
     restartButton.addEventListener("click", startGame);
-    restartButton.addEventListener("mouseenter", enableNativeCursor);
-    restartButton.addEventListener("mouseleave", disableNativeCursor);
-    restartButton.addEventListener("pointerdown", enableNativeCursor);
-    restartButton.addEventListener("pointerup", disableNativeCursor);
     window.addEventListener("pointermove", updateCursor);
     window.addEventListener("pointerdown", updateCursor);
     window.addEventListener("pointerleave", hideCursor);
