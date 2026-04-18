@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Touch Game</title>
+  <style>
+    /* 省略なし：元コードそのまま */
+    :root {
+      --bg1: #0f172a;
+      --bg2: #1e293b;
+      --panel: rgba(15, 23, 42, 0.82);
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #f8fafc;
+      --sub: #cbd5e1;
+      --accent: #fda4af;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family: "Segoe UI", "Yu Gothic", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(56, 189, 248, 0.18), transparent 32%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: auto;
+    }
+    .game-shell { width: min(100%, 520px); display: grid; gap: 12px; }
+    .hud {
+      display: grid; gap: 10px; padding: 14px;
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 20px; backdrop-filter: blur(10px);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    }
+    .title { margin: 0; font-size: clamp(1.2rem, 4vw, 1.7rem); font-weight: 800; text-align: center; }
+    .score { margin: 0; color: #ffe4e6; font-size: clamp(1.35rem, 4.6vw, 1.95rem); font-weight: 700; text-align: center; }
+    .score-value { color: #fde047; font-size: 1.28em; font-weight: 800; }
+    .time { display: none; }
+    .stage { position: relative; aspect-ratio: 5 / 4; }
+    .stage img { width: 100%; height: 100%; object-fit: contain; }
+    .overlay {
+      position: absolute; inset: 0; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; padding: 20px;
+      background: rgba(2, 6, 23, 0.55);
+      opacity: 0; pointer-events: none;
+    }
+    .overlay.show { opacity: 1; pointer-events: auto; }
+    button {
+      border-radius: 999px; padding: 12px 18px;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <section class="hud">
+      <h1 class="title">陽一なでなでゲーム</h1>
+      <p class="score">Love Point: <span id="scoreValue">0</span></p>
+    </section>
+
+    <section class="stage" id="stage">
+      <img id="scene">
+      <div class="overlay show" id="overlay">
+        <button id="restartButton">START</button>
+      </div>
+    </section>
+  </main>
+
+<script>
+/* ===== BGM追加ここから ===== */
+const bgm = new Audio("./bgm.mp3");
+bgm.loop = true;
+bgm.volume = 0.5;
+/* ===== BGM追加ここまで ===== */
+
+const images = {
+  safe: "1.jpg",
+  warning: "2.jpg",
+  watch: "3.jpg",
+  over: "4.jpg"
+};
+
+const scene = document.getElementById("scene");
+const overlay = document.getElementById("overlay");
+const restartButton = document.getElementById("restartButton");
+const scoreValueEl = document.getElementById("scoreValue");
+
+let ap = 0;
+let gameEnded = false;
+let gameStarted = false;
+
+/* ===== ゲーム開始 ===== */
+function startGame() {
+  gameStarted = true;
+  gameEnded = false;
+  ap = 0;
+  overlay.classList.remove("show");
+  scene.src = images.safe;
+  scoreValueEl.textContent = ap;
+
+  /* BGMスタート */
+  bgm.currentTime = 0;
+  bgm.play().catch(()=>{});
+}
+
+/* ===== ゲーム終了 ===== */
+function endGame() {
+  if (gameEnded) return;
+  gameEnded = true;
+  scene.src = images.over;
+  overlay.classList.add("show");
+
+  /* BGM停止 */
+  bgm.pause();
+  bgm.currentTime = 0;
+}
+
+/* ===== 仮の操作（クリックで加点→一定で終了） ===== */
+document.getElementById("stage").addEventListener("click", () => {
+  if (!gameStarted || gameEnded) return;
+  ap++;
+  scoreValueEl.textContent = ap;
+
+  if (ap >= 20) {
+    endGame();
+  }
+});
+
+restartButton.addEventListener("click", startGame);
+</script>
+</body>
+</html>
