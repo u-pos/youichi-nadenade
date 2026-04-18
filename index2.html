@@ -384,14 +384,15 @@
     function endGame(title, text) {
       if (gameEnded) {
         return;
-      bgm.pause();
-      bgm.currentTime = 0;
       }
 
       gameEnded = true;
       clearCycleTimer();
       clearCountdownTimer();
       disablePlayCursor();
+      // ★追加
+      bgm.pause();
+      bgm.currentTime = 0;
       saveBestScore(ap);
       updateHud();
       showOverlay(title, text);
