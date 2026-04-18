@@ -268,7 +268,10 @@
       watch: "3.jpg",
       over: "4.jpg"
     };
-
+    // BGM
+    const bgm = new Audio("./bgm.mp3");
+    bgm.loop = true;
+    bgm.volume = 0.5;
     const scene = document.getElementById("scene");
     const stage = document.getElementById("stage");
     const scoreValueEl = document.getElementById("scoreValue");
@@ -387,6 +390,9 @@
       clearCycleTimer();
       clearCountdownTimer();
       disablePlayCursor();
+      // ★追加
+      bgm.pause();
+      bgm.currentTime = 0;
       saveBestScore(ap);
       updateHud();
       showOverlay(title, text);
@@ -576,6 +582,8 @@
       updateHud();
       nextCycle();
       startCountdown();
+      bgm.currentTime = 0;
+      bgm.play().catch(() => {});
     }
 
     function showStartScreen() {
