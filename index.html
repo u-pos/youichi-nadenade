@@ -149,41 +149,6 @@
       background: transparent;
     }
 
-    .overlay h1 {
-      margin: 0;
-      font-size: clamp(1.6rem, 5vw, 2.4rem);
-      line-height: 1.1;
-      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
-      white-space: nowrap;
-    }
-
-    .overlay h1:empty {
-      display: none;
-    }
-
-    .overlay h1.long-message {
-      font-size: clamp(1.05rem, 3.3vw, 1.45rem);
-      text-shadow:
-        -2px -2px 0 #000,
-        0 -2px 0 #000,
-        2px -2px 0 #000,
-        -2px 0 0 #000,
-        2px 0 0 #000,
-        -2px 2px 0 #000,
-        0 2px 0 #000,
-        2px 2px 0 #000;
-    }
-
-    .overlay p {
-      margin: 0;
-      color: #e2e8f0;
-      line-height: 1.5;
-    }
-
-    .overlay p:empty {
-      display: none;
-    }
-
     button {
       appearance: none;
       border: 0;
@@ -211,7 +176,7 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 72px;
+      width: 54px; /* ← 72px → 75%縮小 */
       height: auto;
       pointer-events: none;
       z-index: 9999;
@@ -224,15 +189,12 @@
       opacity: 1;
     }
 
+    /* ↓このブロックの display:none を削除 */
     @media (pointer: coarse) {
       body,
       .stage,
       button {
         cursor: auto;
-      }
-
-      .cursor-hand {
-        display: none;
       }
     }
   </style>
@@ -260,7 +222,6 @@
     </section>
   </main>
   <img class="cursor-hand" id="cursorHand" src="./hand.png" alt="">
-
   <script>
     const images = {
       safe: "1.jpg",
