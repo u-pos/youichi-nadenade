@@ -1,105 +1,183 @@
-<!-- 省略せず丸ごと差し替えOK -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Touch Game</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Touch Game</title>
+  <style>
+    :root {
+      --bg1: #0f172a;
+      --bg2: #1e293b;
+      --panel: rgba(15, 23, 42, 0.82);
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #f8fafc;
+      --sub: #cbd5e1;
+      --accent: #fda4af;
+    }
 
-<style>
-/* ★元コード完全維持 + 最小変更のみ */
+    * { box-sizing: border-box; }
 
-/* ▼ここ変更（サイズ） */
-.cursor-hand {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 54px;
-  height: auto;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-8px, -8px);
-  opacity: 0;
-  transition: opacity 0.08s ease;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family: "Segoe UI", "Yu Gothic", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(56, 189, 248, 0.18), transparent 32%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: auto;
+    }
 
-/* ▼ここ変更（スマホでも表示させる） */
-@media (pointer: coarse) {
-  body,
-  .stage,
-  button {
-    cursor: auto;
-  }
-}
+    .game-shell { width: min(100%, 520px); display: grid; gap: 12px; }
 
-/* ▼ここ追加（ボタン位置微調整） */
-.overlay button {
-  margin-bottom: 20px;
-}
-</style>
+    .hud {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .title { text-align: center; }
+    .score { text-align: center; }
+
+    .stage { position: relative; aspect-ratio: 5 / 4; }
+
+    .stage img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: rgba(2, 6, 23, 0.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    button {
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 800;
+    }
+
+    /* ★ボタン少し上 */
+    .overlay button {
+      margin-bottom: 20px;
+    }
+
+    .cursor-hand {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 54px;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-8px, -8px);
+      opacity: 0;
+      transition: opacity 0.08s ease;
+    }
+
+    .cursor-hand.show { opacity: 1; }
+
+    /* ★スマホでも表示（display:none削除済み） */
+    @media (pointer: coarse) {
+      body, .stage, button { cursor: auto; }
+    }
+  </style>
 </head>
 
 <body>
+<main class="game-shell">
+  <section class="hud">
+    <h1 class="title">陽一なでなでゲーム</h1>
+    <p class="score">Love Point: <span id="scoreValue">0</span></p>
+  </section>
 
-<!-- ★HTMLは完全に元のまま -->
-<img class="cursor-hand" id="cursorHand" src="./hand.png" alt="">
+  <section class="stage" id="stage">
+    <img id="scene" src="1.jpg">
+    <div class="overlay" id="overlay">
+      <h1 id="overlayTitle"></h1>
+      <p id="overlayText"></p>
+      <button id="restartButton">再度トライ</button>
+    </div>
+  </section>
+</main>
+
+<img class="cursor-hand" id="cursorHand" src="./hand.png">
 
 <script>
+const cursorHand = document.getElementById("cursorHand");
+const overlay = document.getElementById("overlay");
+const restartButton = document.getElementById("restartButton");
 
-/* ★元コードそのまま + 追加だけ */
+let cursorTimeout = null;
+let gameStarted = false;
+let gameEnded = false;
 
-let cursorTimeout = null; // ←追加
+/* ★手アイコン制御 */
+function updateCursor(e){
+  if (!gameStarted || gameEnded) return;
 
-function updateCursor(event) {
-  if (!gameStarted || gameEnded) {
-    cursorHand.classList.remove("show");
-    return;
-  }
-
-  cursorHand.style.left = `${event.clientX}px`;
-  cursorHand.style.top = `${event.clientY}px`;
+  cursorHand.style.left = e.clientX + "px";
+  cursorHand.style.top = e.clientY + "px";
   cursorHand.classList.add("show");
 
-  // ▼ここ追加（0.5秒で消える）
-  if (cursorTimeout) clearTimeout(cursorTimeout);
-  cursorTimeout = setTimeout(() => {
+  if(cursorTimeout) clearTimeout(cursorTimeout);
+  cursorTimeout = setTimeout(()=>{
     cursorHand.classList.remove("show");
-  }, 500);
+  },500);
 }
 
-/* ▼ここ変更 */
-function gameOver() {
-  phase = "over";
-  scene.src = images.over;
-  updateHud();
+function hideCursor(){
+  cursorHand.classList.remove("show");
+}
+
+/* ★GAME OVER削除 */
+function gameOver(){
+  gameEnded = true;
+  overlay.classList.add("show");
   restartButton.textContent = "再度トライ";
-  endGame("", ""); // ← GAME OVER削除
 }
 
-/* ▼ここ変更 */
-function timeUp() {
-  phase = "over";
-  scene.src = images.over;
-  updateHud();
-  restartButton.textContent = "再度トライ";
-  endGame("黙ってたけどお触りは禁止だよ", "");
-}
-
-/* ▼ここ変更 */
-function showStartScreen() {
-  gameStarted = false;
+/* ★スタート */
+function startGame(){
+  gameStarted = true;
   gameEnded = false;
-  ap = 0;
-  timeLeft = timeLimit;
-
-  restartButton.textContent = "再度トライ"; // ←変更
-
-  disablePlayCursor();
-  setScene("safe");
-  updateHud();
-  showOverlay("", "");
+  overlay.classList.remove("show");
 }
 
+restartButton.addEventListener("click", startGame);
+window.addEventListener("pointermove", updateCursor);
+window.addEventListener("pointerdown", updateCursor);
+window.addEventListener("pointerleave", hideCursor);
 </script>
+
 </body>
 </html>
