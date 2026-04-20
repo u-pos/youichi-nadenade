@@ -15,7 +15,9 @@
       --accent: #fda4af;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -53,19 +55,71 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     }
+.overlay button {
+  margin-bottom: 20px;
+}
+    .title {
+      margin: 0;
+      font-size: clamp(1.2rem, 4vw, 1.7rem);
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-align: center;
+    }
 
-    .title { text-align: center; }
-    .score { text-align: center; }
+    .score {
+      margin: 0;
+      color: #ffe4e6;
+      font-size: clamp(1.35rem, 4.6vw, 1.95rem);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .score-value {
+      color: #fde047;
+      font-size: 1.28em;
+      font-weight: 800;
+    }
+
+    .time {
+      display: none;
+    }
+
+    .stage-badges {
+      position: absolute;
+      inset: auto 12px 12px 12px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .badge {
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f8fafc;
+      font-size: clamp(0.82rem, 2.8vw, 1rem);
+      font-weight: 700;
+      line-height: 1.35;
+      white-space: pre-line;
+      min-width: 116px;
+    }
 
     .stage {
       position: relative;
       aspect-ratio: 5 / 4;
       touch-action: none;
+      cursor: auto;
     }
 
     .stage img {
       width: 100%;
       height: 100%;
+      display: block;
       object-fit: contain;
       pointer-events: none;
     }
@@ -80,6 +134,7 @@
       gap: 12px;
       padding: 20px;
       background: rgba(2, 6, 23, 0.55);
+      text-align: center;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
@@ -90,16 +145,76 @@
       pointer-events: auto;
     }
 
-    /* ★ボタン位置微調整 */
-    .overlay button {
-      margin-bottom: 20px;
+    .overlay.game-over {
+      justify-content: flex-end;
+      padding: 20px 20px 46px;
+      background: transparent;
+    }
+
+    .overlay h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      line-height: 1.1;
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
+      white-space: nowrap;
+    }
+
+    .overlay h1:empty {
+      display: none;
+    }
+
+    .overlay h1.long-message {
+      font-size: clamp(1.05rem, 3.3vw, 1.45rem);
+      text-shadow:
+        -2px -2px 0 #000,
+        0 -2px 0 #000,
+        2px -2px 0 #000,
+        -2px 0 0 #000,
+        2px 0 0 #000,
+        -2px 2px 0 #000,
+        0 2px 0 #000,
+        2px 2px 0 #000;
+    }
+
+    .overlay p {
+      margin: 0;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    .overlay p:empty {
+      display: none;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 800;
+      color: #08111f;
+      background: linear-gradient(180deg, #f8fafc, #cbd5e1);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      cursor: auto;
+    }
+
+    .play-cursor-active,
+    .play-cursor-active .stage,
+    .play-cursor-active button {
+      cursor: none;
+    }
+
+    .play-cursor-active .cursor-hand.show {
+      opacity: 1;
     }
 
     .cursor-hand {
       position: fixed;
       top: 0;
       left: 0;
-      width: 54px; /* ←75% */
+      width: 50px;
+      height: auto;
       pointer-events: none;
       z-index: 9999;
       transform: translate(-8px, -8px);
@@ -111,91 +226,400 @@
       opacity: 1;
     }
 
-    /* ★スマホでも表示（display:none削除） */
     @media (pointer: coarse) {
-      body, .stage, button { cursor: auto; }
+      body,
+      .stage,
+      button {
+        cursor: auto;
+      }
     }
   </style>
 </head>
-
 <body>
+  <main class="game-shell">
+    <section class="hud">
+      <h1 class="title">陽一なでなでゲーム</h1>
+      <p class="score" id="score">Love Point: <span class="score-value" id="scoreValue">0</span></p>
+    </section>
 
-<!-- ★HTMLは一切変更なし -->
-<main class="game-shell">
-  <section class="hud">
-    <h1 class="title">陽一なでなでゲーム</h1>
-    <p class="score" id="score">Love Point: <span class="score-value" id="scoreValue">0</span></p>
-  </section>
-
-  <section class="stage" id="stage">
-    <img id="scene" alt="game scene">
-    <div class="stage-badges">
-      <p class="badge" id="bestScore">ハイスコア
+    <section class="stage" id="stage">
+      <img id="scene" alt="game scene">
+      <div class="stage-badges">
+        <p class="badge" id="bestScore">ハイスコア
 0点</p>
-      <p class="badge" id="timeLeft">残り時間
+        <p class="badge" id="timeLeft">残り時間
 60秒</p>
-    </div>
-    <div class="overlay" id="overlay">
-      <h1 id="overlayTitle"></h1>
-      <p id="overlayText"></p>
-      <button id="restartButton" type="button">再度トライ</button>
-    </div>
-  </section>
-</main>
+      </div>
+      <div class="overlay" id="overlay">
+        <h1 id="overlayTitle"></h1>
+        <p id="overlayText"></p>
+        <button id="restartButton" type="button">RESTART</button>
+      </div>
+    </section>
+  </main>
+  <img class="cursor-hand" id="cursorHand" src="./hand.png" alt="">
 
-<img class="cursor-hand" id="cursorHand" src="./hand.png" alt="">
+  <script>
+    const images = {
+      safe: "1.jpg",
+      warning: "2.jpg",
+      watch: "3.jpg",
+      over: "4.jpg"
+    };
+    // BGM
+    const bgm = new Audio("./bgm.mp3");
+    bgm.loop = true;
+    bgm.volume = 0.5;
+    const scene = document.getElementById("scene");
+    const stage = document.getElementById("stage");
+    const scoreValueEl = document.getElementById("scoreValue");
+    const bestScoreEl = document.getElementById("bestScore");
+    const timeLeftEl = document.getElementById("timeLeft");
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayText = document.getElementById("overlayText");
+    const restartButton = document.getElementById("restartButton");
+    const cursorHand = document.getElementById("cursorHand");
 
-<script>
+    const timeLimit = 60;
+    const highScoreKey = "yoi-nadenade-bestscore";
+    let ap = 0;
+    let phase = "safe";
+    let timer = null;
+    let countdownTimer = null;
+    let pointerDown = false;
+    let lastPointerY = null;
+    let lastMoveDirection = null;
+    let timeLeft = timeLimit;
+    let gameEnded = false;
+    let gameStarted = false;
+    const moveThreshold = 12;
 
-/* ★元コード完全維持＋必要最小限の追加のみ */
+    const hitZones = [
+      { cx: 0.55, cy: 0.20, rx: 0.09, ry: 0.08 },
+      { cx: 0.57, cy: 0.56, rx: 0.17, ry: 0.22 },
+      { cx: 0.60, cy: 0.76, rx: 0.13, ry: 0.10 }
+    ];
 
-let cursorTimeout = null;
+    function updateHud() {
+      scoreValueEl.textContent = ${ap};
+      timeLeftEl.textContent = 残り時間\n${timeLeft}秒;
+      bestScoreEl.textContent = ハイスコア\n${loadBestScore()}点;
+    }
 
-/* ▼ここだけ変更 */
-function updateCursor(event) {
-  if (!gameStarted || gameEnded) {
-    cursorHand.classList.remove("show");
-    return;
-  }
+    function showOverlay(title, text) {
+      overlayTitle.textContent = title;
+      overlayTitle.classList.toggle("long-message", title === "黙ってたけどお触りは禁止だよ");
+      overlayText.textContent = text;
+      overlay.classList.toggle("game-over", phase === "over");
+      overlay.classList.add("show");
+    }
 
-  cursorHand.style.left = `${event.clientX}px`;
-  cursorHand.style.top = `${event.clientY}px`;
-  cursorHand.classList.add("show");
+    function hideOverlay() {
+      overlayTitle.classList.remove("long-message");
+      overlay.classList.remove("game-over");
+      overlay.classList.remove("show");
+    }
 
-  /* ★0.5秒で非表示 */
-  if (cursorTimeout) clearTimeout(cursorTimeout);
-  cursorTimeout = setTimeout(() => {
-    cursorHand.classList.remove("show");
-  }, 500);
-}
+    function setScene(nextPhase) {
+      phase = nextPhase;
+      scene.src = images[nextPhase] || images.safe;
+      if (nextPhase === "warning") {
+        lastMoveDirection = null;
+      }
+      updateHud();
+    }
 
-/* ▼ここだけ変更 */
-function gameOver() {
-  phase = "over";
-  scene.src = images.over;
-  updateHud();
-  restartButton.textContent = "再度トライ";
-  endGame("", ""); /* ←GAME OVER削除 */
-}
+    function clearCycleTimer() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
 
-/* ▼ここだけ変更 */
-function showStartScreen() {
-  gameStarted = false;
-  gameEnded = false;
-  ap = 0;
-  timeLeft = timeLimit;
-  pointerDown = false;
-  lastPointerY = null;
-  lastMoveDirection = null;
-  clearCycleTimer();
-  clearCountdownTimer();
-  restartButton.textContent = "再度トライ";
-  disablePlayCursor();
-  setScene("safe");
-  updateHud();
-  showOverlay("", "");
-}
+    function clearCountdownTimer() {
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      }
+    }
 
-</script>
+    function loadBestScore() {
+      try {
+        const saved = Number(localStorage.getItem(highScoreKey) || "0");
+        return Number.isFinite(saved) ? saved : 0;
+      } catch {
+        return 0;
+      }
+    }
+
+    function saveBestScore(score) {
+      const currentBest = loadBestScore();
+      const nextBest = Math.max(currentBest, score);
+      localStorage.setItem(highScoreKey, String(nextBest));
+      return nextBest;
+    }
+
+    function migrateLegacyHighScores() {
+      const legacyKey = "yoi-nadenade-highscores";
+      const bestScore = loadBestScore();
+
+      if (bestScore > 0) {
+        return;
+      }
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(legacyKey) || "[]");
+        if (Array.isArray(saved) && saved.length > 0) {
+          const top = Math.max(...saved.filter((value) => Number.isFinite(value)), 0);
+          localStorage.setItem(highScoreKey, String(top));
+        }
+      } catch {
+        return;
+      }
+    }
+
+    function endGame(title, text) {
+      if (gameEnded) {
+        return;
+      }
+
+      gameEnded = true;
+      clearCycleTimer();
+      clearCountdownTimer();
+      disablePlayCursor();
+      // ★追加
+      bgm.pause();
+      bgm.currentTime = 0;
+      saveBestScore(ap);
+      updateHud();
+      showOverlay(title, text);
+    }
+
+     function gameOver() {
+      phase = "over";
+      scene.src = images.over;
+      updateHud();
+      restartButton.textContent = "再度トライ";
+      endGame("", ""); // ←ここ
+    }
+    function timeUp() {
+      phase = "over";
+      scene.src = images.over;
+      updateHud();
+      restartButton.textContent = "RESTART";
+      endGame("黙ってたけどお触りは禁止だよ", "");
+    }
+
+    function nextCycle() {
+      if (gameEnded) {
+        return;
+      }
+
+      clearCycleTimer();
+
+      if (phase === "safe") {
+        timer = setTimeout(() => {
+          setScene("warning");
+          nextCycle();
+        }, 4000 + Math.random() * 3000);
+        return;
+      }
+
+      if (phase === "warning") {
+        timer = setTimeout(() => {
+          setScene("watch");
+          nextCycle();
+        }, 1000);
+        return;
+      }
+
+      if (phase === "watch") {
+        timer = setTimeout(() => {
+          setScene("safe");
+          nextCycle();
+        }, 2000);
+      }
+    }
+
+    function pointInZones(clientX, clientY) {
+      const rect = stage.getBoundingClientRect();
+      const x = (clientX - rect.left) / rect.width;
+      const y = (clientY - rect.top) / rect.height;
+
+      return hitZones.some((zone) => {
+        const dx = (x - zone.cx) / zone.rx;
+        const dy = (y - zone.cy) / zone.ry;
+        return dx * dx + dy * dy <= 1;
+      });
+    }
+
+    function addAp(amount) {
+      if (gameEnded) {
+        return;
+      }
+
+      ap += amount;
+      updateHud();
+    }
+    let cursorTimeout = null; // ←これ追加（上の方）
+    function updateCursor(event) {
+      if (!gameStarted || gameEnded) {
+        cursorHand.classList.remove("show");
+        return;
+      }
+
+      cursorHand.style.left = ${event.clientX}px;
+      cursorHand.style.top = ${event.clientY}px;
+      cursorHand.classList.add("show");
+       // ▼これ追加
+      if (cursorTimeout) clearTimeout(cursorTimeout);
+      cursorTimeout = setTimeout(() => {
+        cursorHand.classList.remove("show");
+      }, 500);
+    }
+
+    function hideCursor() {
+      cursorHand.classList.remove("show");
+    }
+
+    function enablePlayCursor() {
+      document.body.classList.add("play-cursor-active");
+    }
+
+    function disablePlayCursor() {
+      document.body.classList.remove("play-cursor-active");
+      hideCursor();
+    }
+
+    function startCountdown() {
+      clearCountdownTimer();
+      countdownTimer = setInterval(() => {
+        if (gameEnded) {
+          clearCountdownTimer();
+          return;
+        }
+
+        timeLeft -= 1;
+        updateHud();
+
+        if (timeLeft <= 0) {
+          timeLeft = 0;
+          updateHud();
+          timeUp();
+        }
+      }, 1000);
+    }
+
+    function handlePointerDown(event) {
+      if (!gameStarted || phase === "over" || gameEnded) {
+        return;
+      }
+
+      pointerDown = true;
+      lastPointerY = event.clientY;
+      lastMoveDirection = null;
+
+      if (!pointInZones(event.clientX, event.clientY)) {
+        return;
+      }
+
+      if (phase === "watch") {
+        gameOver();
+      }
+    }
+
+    function handlePointerMove(event) {
+      if (!gameStarted || !pointerDown || phase === "over" || gameEnded) {
+        return;
+      }
+
+      if (lastPointerY === null) {
+        lastPointerY = event.clientY;
+        return;
+      }
+
+      const deltaY = event.clientY - lastPointerY;
+
+      if (Math.abs(deltaY) < moveThreshold) {
+        return;
+      }
+
+      lastPointerY = event.clientY;
+
+      if (!pointInZones(event.clientX, event.clientY)) {
+        return;
+      }
+
+      const direction = deltaY > 0 ? "down" : "up";
+
+      if (phase === "watch") {
+        gameOver();
+        return;
+      }
+
+      if (direction !== lastMoveDirection) {
+        lastMoveDirection = direction;
+        addAp(1);
+      }
+    }
+
+    function endStroke() {
+      pointerDown = false;
+      lastPointerY = null;
+      lastMoveDirection = null;
+    }
+
+    function startGame() {
+      gameStarted = true;
+      ap = 0;
+      timeLeft = timeLimit;
+      gameEnded = false;
+      pointerDown = false;
+      lastPointerY = null;
+      lastMoveDirection = null;
+      hideOverlay();
+      enablePlayCursor();
+      setScene("safe");
+      updateHud();
+      nextCycle();
+      startCountdown();
+      bgm.currentTime = 0;
+      bgm.play().catch(() => {});
+    }
+
+    function showStartScreen() {
+      gameStarted = false;
+      gameEnded = false;
+      ap = 0;
+      timeLeft = timeLimit;
+      pointerDown = false;
+      lastPointerY = null;
+      lastMoveDirection = null;
+      clearCycleTimer();
+      clearCountdownTimer();
+      restartButton.textContent = "もう一度触る";
+      disablePlayCursor();
+      setScene("safe");
+      updateHud();
+      showOverlay("", "");
+    }
+
+    stage.addEventListener("pointerdown", handlePointerDown);
+    stage.addEventListener("pointermove", handlePointerMove);
+    stage.addEventListener("pointerup", endStroke);
+    stage.addEventListener("pointercancel", endStroke);
+    stage.addEventListener("pointerleave", endStroke);
+    scene.addEventListener("dragstart", (event) => event.preventDefault());
+    restartButton.addEventListener("click", startGame);
+    window.addEventListener("pointermove", updateCursor);
+    window.addEventListener("pointerdown", updateCursor);
+    window.addEventListener("pointerleave", hideCursor);
+    window.addEventListener("blur", hideCursor);
+
+    migrateLegacyHighScores();
+    updateHud();
+    showStartScreen();
+  </script>
 </body>
 </html>
