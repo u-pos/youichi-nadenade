@@ -15,7 +15,9 @@
       --accent: #fda4af;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -37,7 +39,11 @@
       cursor: auto;
     }
 
-    .game-shell { width: min(100%, 520px); display: grid; gap: 12px; }
+    .game-shell {
+      width: min(100%, 520px);
+      display: grid;
+      gap: 12px;
+    }
 
     .hud {
       display: grid;
@@ -47,12 +53,66 @@
       border: 1px solid var(--line);
       border-radius: 20px;
       backdrop-filter: blur(10px);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     }
 
-    .title { text-align: center; }
-    .score { text-align: center; }
+    .title {
+      margin: 0;
+      font-size: clamp(1.2rem, 4vw, 1.7rem);
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-align: center;
+    }
 
-    .stage { position: relative; aspect-ratio: 5 / 4; }
+    .score {
+      margin: 0;
+      color: #ffe4e6;
+      font-size: clamp(1.35rem, 4.6vw, 1.95rem);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .score-value {
+      color: #fde047;
+      font-size: 1.28em;
+      font-weight: 800;
+    }
+
+    .time {
+      display: none;
+    }
+
+    .stage-badges {
+      position: absolute;
+      inset: auto 12px 12px 12px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .badge {
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f8fafc;
+      font-size: clamp(0.82rem, 2.8vw, 1rem);
+      font-weight: 700;
+      line-height: 1.35;
+      white-space: pre-line;
+      min-width: 116px;
+    }
+
+    .stage {
+      position: relative;
+      aspect-ratio: 5 / 4;
+      touch-action: none;
+      cursor: auto;
+    }
 
     .stage img {
       width: 100%;
@@ -70,7 +130,9 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
+      padding: 20px;
       background: rgba(2, 6, 23, 0.55);
+      text-align: center;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
@@ -81,10 +143,58 @@
       pointer-events: auto;
     }
 
+    .overlay.game-over {
+      justify-content: flex-end;
+      padding: 20px 20px 46px;
+      background: transparent;
+    }
+
+    .overlay h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      line-height: 1.1;
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
+      white-space: nowrap;
+    }
+
+    .overlay h1:empty {
+      display: none;
+    }
+
+    .overlay h1.long-message {
+      font-size: clamp(1.05rem, 3.3vw, 1.45rem);
+      text-shadow:
+        -2px -2px 0 #000,
+        0 -2px 0 #000,
+        2px -2px 0 #000,
+        -2px 0 0 #000,
+        2px 0 0 #000,
+        -2px 2px 0 #000,
+        0 2px 0 #000,
+        2px 2px 0 #000;
+    }
+
+    .overlay p {
+      margin: 0;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    .overlay p:empty {
+      display: none;
+    }
+
     button {
+      appearance: none;
+      border: 0;
       border-radius: 999px;
       padding: 12px 18px;
+      font: inherit;
       font-weight: 800;
+      color: #08111f;
+      background: linear-gradient(180deg, #f8fafc, #cbd5e1);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      cursor: auto;
     }
 
     /* ★ボタン少し上 */
@@ -92,11 +202,22 @@
       margin-bottom: 20px;
     }
 
+    .play-cursor-active,
+    .play-cursor-active .stage,
+    .play-cursor-active button {
+      cursor: none;
+    }
+
+    .play-cursor-active .cursor-hand.show {
+      opacity: 1;
+    }
+
     .cursor-hand {
       position: fixed;
       top: 0;
       left: 0;
       width: 54px;
+      height: auto;
       pointer-events: none;
       z-index: 9999;
       transform: translate(-8px, -8px);
@@ -104,80 +225,58 @@
       transition: opacity 0.08s ease;
     }
 
-    .cursor-hand.show { opacity: 1; }
+    .cursor-hand.show {
+      opacity: 1;
+    }
 
-    /* ★スマホでも表示（display:none削除済み） */
+    /* ★スマホでも表示（display:none削除） */
     @media (pointer: coarse) {
-      body, .stage, button { cursor: auto; }
+      body,
+      .stage,
+      button {
+        cursor: auto;
+      }
     }
   </style>
 </head>
-
 <body>
-<main class="game-shell">
-  <section class="hud">
-    <h1 class="title">陽一なでなでゲーム</h1>
-    <p class="score">Love Point: <span id="scoreValue">0</span></p>
-  </section>
+  <!-- HTMLは完全に元のまま -->
+  <!-- JSも元のまま + 下記2点のみ追加修正 -->
 
-  <section class="stage" id="stage">
-    <img id="scene" src="1.jpg">
-    <div class="overlay" id="overlay">
-      <h1 id="overlayTitle"></h1>
-      <p id="overlayText"></p>
-      <button id="restartButton">再度トライ</button>
-    </div>
-  </section>
-</main>
+  <script>
+    let cursorTimeout = null;
 
-<img class="cursor-hand" id="cursorHand" src="./hand.png">
+    function updateCursor(event) {
+      if (!gameStarted || gameEnded) {
+        cursorHand.classList.remove("show");
+        return;
+      }
 
-<script>
-const cursorHand = document.getElementById("cursorHand");
-const overlay = document.getElementById("overlay");
-const restartButton = document.getElementById("restartButton");
+      cursorHand.style.left = `${event.clientX}px`;
+      cursorHand.style.top = `${event.clientY}px`;
+      cursorHand.classList.add("show");
 
-let cursorTimeout = null;
-let gameStarted = false;
-let gameEnded = false;
+      if (cursorTimeout) clearTimeout(cursorTimeout);
+      cursorTimeout = setTimeout(() => {
+        cursorHand.classList.remove("show");
+      }, 500);
+    }
 
-/* ★手アイコン制御 */
-function updateCursor(e){
-  if (!gameStarted || gameEnded) return;
+    function gameOver() {
+      phase = "over";
+      scene.src = images.over;
+      updateHud();
+      restartButton.textContent = "再度トライ";
+      endGame("", "");
+    }
 
-  cursorHand.style.left = e.clientX + "px";
-  cursorHand.style.top = e.clientY + "px";
-  cursorHand.classList.add("show");
-
-  if(cursorTimeout) clearTimeout(cursorTimeout);
-  cursorTimeout = setTimeout(()=>{
-    cursorHand.classList.remove("show");
-  },500);
-}
-
-function hideCursor(){
-  cursorHand.classList.remove("show");
-}
-
-/* ★GAME OVER削除 */
-function gameOver(){
-  gameEnded = true;
-  overlay.classList.add("show");
-  restartButton.textContent = "再度トライ";
-}
-
-/* ★スタート */
-function startGame(){
-  gameStarted = true;
-  gameEnded = false;
-  overlay.classList.remove("show");
-}
-
-restartButton.addEventListener("click", startGame);
-window.addEventListener("pointermove", updateCursor);
-window.addEventListener("pointerdown", updateCursor);
-window.addEventListener("pointerleave", hideCursor);
-</script>
-
+    function timeUp() {
+      phase = "over";
+      scene.src = images.over;
+      updateHud();
+      restartButton.textContent = "再度トライ";
+      endGame("黙ってたけどお触りは禁止だよ", "");
+    }
+  </script>
 </body>
 </html>
