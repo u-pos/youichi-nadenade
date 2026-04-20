@@ -247,8 +247,7 @@
       <div class="stage-badges">
         <p class="badge" id="bestScore">ハイスコア
 0点</p>
-        <p class="badge" id="timeLeft">残り時間
-60秒</p>
+        
       </div>
       <div class="overlay" id="overlay">
         <h1 id="overlayTitle"></h1>
@@ -274,7 +273,6 @@
     const stage = document.getElementById("stage");
     const scoreValueEl = document.getElementById("scoreValue");
     const bestScoreEl = document.getElementById("bestScore");
-    const timeLeftEl = document.getElementById("timeLeft");
     const overlay = document.getElementById("overlay");
     const overlayTitle = document.getElementById("overlayTitle");
     const overlayText = document.getElementById("overlayText");
@@ -303,8 +301,9 @@
 
     function updateHud() {
       scoreValueEl.textContent = `${ap}`;
-      timeLeftEl.textContent = `残り時間\n${timeLeft}秒`;
-      bestScoreEl.textContent = `ハイスコア\n${loadBestScore()}点`;
+      bestScoreEl.textContent = `残り：${timeLeft}秒
+      ▼ハイスコア
+      ${loadBestScore()}点`;
     }
     function showOverlay(title, text) {
       overlayTitle.textContent = title;
