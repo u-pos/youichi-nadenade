@@ -302,8 +302,7 @@
     function updateHud() {
       scoreValueEl.textContent = `${ap}`;
       bestScoreEl.textContent = `残り：${timeLeft}秒
-      ▼ハイスコア
-      ${loadBestScore()}点`;
+      Best: ${loadBestScore()}点`;
     }
     function showOverlay(title, text) {
       overlayTitle.textContent = title;
