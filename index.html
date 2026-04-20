@@ -302,11 +302,10 @@
     ];
 
     function updateHud() {
-      scoreValueEl.textContent = ${ap};
-      timeLeftEl.textContent = 残り時間\n${timeLeft}秒;
-      bestScoreEl.textContent = ハイスコア\n${loadBestScore()}点;
+      scoreValueEl.textContent = `${ap}`;
+      timeLeftEl.textContent = `残り時間\n${timeLeft}秒`;
+      bestScoreEl.textContent = `ハイスコア\n${loadBestScore()}点`;
     }
-
     function showOverlay(title, text) {
       overlayTitle.textContent = title;
       overlayTitle.classList.toggle("long-message", title === "黙ってたけどお触りは禁止だよ");
@@ -469,8 +468,8 @@
         return;
       }
 
-      cursorHand.style.left = ${event.clientX}px;
-      cursorHand.style.top = ${event.clientY}px;
+      cursorHand.style.left = `${event.clientX}px`;
+      cursorHand.style.top = `${event.clientY}px`;
       cursorHand.classList.add("show");
        // ▼これ追加
       if (cursorTimeout) clearTimeout(cursorTimeout);
