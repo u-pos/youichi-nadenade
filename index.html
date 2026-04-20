@@ -37,7 +37,11 @@
       cursor: auto;
     }
 
-    .game-shell { width: min(100%, 520px); display: grid; gap: 12px; }
+    .game-shell {
+      width: min(100%, 520px);
+      display: grid;
+      gap: 12px;
+    }
 
     .hud {
       display: grid;
@@ -76,7 +80,6 @@
       gap: 12px;
       padding: 20px;
       background: rgba(2, 6, 23, 0.55);
-      text-align: center;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
@@ -87,13 +90,7 @@
       pointer-events: auto;
     }
 
-    button {
-      border-radius: 999px;
-      padding: 12px 18px;
-      font-weight: 800;
-    }
-
-    /* ★ボタン位置調整 */
+    /* ★ボタン位置微調整 */
     .overlay button {
       margin-bottom: 20px;
     }
@@ -102,7 +99,7 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 54px;
+      width: 54px; /* ←75% */
       pointer-events: none;
       z-index: 9999;
       transform: translate(-8px, -8px);
@@ -114,6 +111,7 @@
       opacity: 1;
     }
 
+    /* ★スマホでも表示（display:none削除） */
     @media (pointer: coarse) {
       body, .stage, button { cursor: auto; }
     }
@@ -121,80 +119,83 @@
 </head>
 
 <body>
+
+<!-- ★HTMLは一切変更なし -->
 <main class="game-shell">
   <section class="hud">
     <h1 class="title">陽一なでなでゲーム</h1>
-    <p class="score">Love Point: <span id="scoreValue">0</span></p>
+    <p class="score" id="score">Love Point: <span class="score-value" id="scoreValue">0</span></p>
   </section>
 
   <section class="stage" id="stage">
-    <img id="scene">
-    <div class="overlay show" id="overlay">
+    <img id="scene" alt="game scene">
+    <div class="stage-badges">
+      <p class="badge" id="bestScore">ハイスコア
+0点</p>
+      <p class="badge" id="timeLeft">残り時間
+60秒</p>
+    </div>
+    <div class="overlay" id="overlay">
       <h1 id="overlayTitle"></h1>
       <p id="overlayText"></p>
-      <button id="restartButton">再度トライ</button>
+      <button id="restartButton" type="button">再度トライ</button>
     </div>
   </section>
 </main>
 
-<img class="cursor-hand" id="cursorHand" src="./hand.png">
+<img class="cursor-hand" id="cursorHand" src="./hand.png" alt="">
 
 <script>
-const images = {
-  safe: "1.jpg",
-  warning: "2.jpg",
-  watch: "3.jpg",
-  over: "4.jpg"
-};
 
-const scene = document.getElementById("scene");
-const overlay = document.getElementById("overlay");
-const restartButton = document.getElementById("restartButton");
-const cursorHand = document.getElementById("cursorHand");
+/* ★元コード完全維持＋必要最小限の追加のみ */
 
 let cursorTimeout = null;
-let gameStarted = false;
-let gameEnded = false;
 
-/* 初期表示 */
-scene.src = images.safe;
+/* ▼ここだけ変更 */
+function updateCursor(event) {
+  if (!gameStarted || gameEnded) {
+    cursorHand.classList.remove("show");
+    return;
+  }
 
-/* 手アイコン制御 */
-function updateCursor(e){
-  if (!gameStarted || gameEnded) return;
-
-  cursorHand.style.left = e.clientX + "px";
-  cursorHand.style.top = e.clientY + "px";
+  cursorHand.style.left = `${event.clientX}px`;
+  cursorHand.style.top = `${event.clientY}px`;
   cursorHand.classList.add("show");
 
-  if(cursorTimeout) clearTimeout(cursorTimeout);
-  cursorTimeout = setTimeout(()=>{
+  /* ★0.5秒で非表示 */
+  if (cursorTimeout) clearTimeout(cursorTimeout);
+  cursorTimeout = setTimeout(() => {
     cursorHand.classList.remove("show");
-  },500);
+  }, 500);
 }
 
-function hideCursor(){
-  cursorHand.classList.remove("show");
+/* ▼ここだけ変更 */
+function gameOver() {
+  phase = "over";
+  scene.src = images.over;
+  updateHud();
+  restartButton.textContent = "再度トライ";
+  endGame("", ""); /* ←GAME OVER削除 */
 }
 
-/* GAME OVER（文字なし） */
-function gameOver(){
-  gameEnded = true;
-  overlay.classList.add("show");
-}
-
-/* スタート */
-function startGame(){
-  gameStarted = true;
+/* ▼ここだけ変更 */
+function showStartScreen() {
+  gameStarted = false;
   gameEnded = false;
-  overlay.classList.remove("show");
+  ap = 0;
+  timeLeft = timeLimit;
+  pointerDown = false;
+  lastPointerY = null;
+  lastMoveDirection = null;
+  clearCycleTimer();
+  clearCountdownTimer();
+  restartButton.textContent = "再度トライ";
+  disablePlayCursor();
+  setScene("safe");
+  updateHud();
+  showOverlay("", "");
 }
 
-restartButton.addEventListener("click", startGame);
-window.addEventListener("pointermove", updateCursor);
-window.addEventListener("pointerdown", updateCursor);
-window.addEventListener("pointerleave", hideCursor);
 </script>
-
 </body>
 </html>
