@@ -47,10 +47,10 @@
       border: 1px solid var(--line);
       border-radius: 20px;
       backdrop-filter: blur(10px);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     }
 
     .title { text-align: center; }
-
     .score { text-align: center; }
 
     .stage {
@@ -74,7 +74,9 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
+      padding: 20px;
       background: rgba(2, 6, 23, 0.55);
+      text-align: center;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
@@ -91,7 +93,7 @@
       font-weight: 800;
     }
 
-    /* ★ボタン少し上 */
+    /* ★ボタン位置調整 */
     .overlay button {
       margin-bottom: 20px;
     }
@@ -112,11 +114,8 @@
       opacity: 1;
     }
 
-    /* ★スマホでも表示 */
     @media (pointer: coarse) {
-      body, .stage, button {
-        cursor: auto;
-      }
+      body, .stage, button { cursor: auto; }
     }
   </style>
 </head>
@@ -130,7 +129,7 @@
 
   <section class="stage" id="stage">
     <img id="scene">
-    <div class="overlay" id="overlay">
+    <div class="overlay show" id="overlay">
       <h1 id="overlayTitle"></h1>
       <p id="overlayText"></p>
       <button id="restartButton">再度トライ</button>
@@ -157,10 +156,10 @@ let cursorTimeout = null;
 let gameStarted = false;
 let gameEnded = false;
 
-/* ★初期表示（これがないと真っ白になる） */
+/* 初期表示 */
 scene.src = images.safe;
 
-/* ★カーソル制御 */
+/* 手アイコン制御 */
 function updateCursor(e){
   if (!gameStarted || gameEnded) return;
 
@@ -178,13 +177,13 @@ function hideCursor(){
   cursorHand.classList.remove("show");
 }
 
-/* ★GAME OVER非表示 */
+/* GAME OVER（文字なし） */
 function gameOver(){
   gameEnded = true;
   overlay.classList.add("show");
 }
 
-/* ★スタート */
+/* スタート */
 function startGame(){
   gameStarted = true;
   gameEnded = false;
