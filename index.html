@@ -452,13 +452,24 @@
     }
 
     function addAp(amount) {
-      if (gameEnded) {
-        return;
-      }
+  if (gameEnded) return;
 
-      ap += amount;
-      updateHud();
-    }
+  ap += amount;
+
+  // ★ここ追加
+  if (ap >= 500 && !isImageSwitched) {
+    isImageSwitched = true;
+
+    images.safe = "1B.jpg";
+    images.warning = "2B.jpg";
+    images.watch = "3B.jpg";
+
+    // 現在表示中の画像も即更新
+    setScene(phase);
+  }
+
+  updateHud();
+}
     let cursorTimeout = null; // ←これ追加（上の方）
     function updateCursor(event) {
       if (!gameStarted || gameEnded) {
@@ -572,6 +583,13 @@
       ap = 0;
       timeLeft = timeLimit;
       gameEnded = false;
+    
+      // ★追加（リセット）
+      isImageSwitched = false;
+      images.safe = "1.jpg";
+      images.warning = "2.jpg";
+      images.watch = "3.jpg";
+    
       pointerDown = false;
       lastPointerY = null;
       lastMoveDirection = null;
